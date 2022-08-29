@@ -22,4 +22,5 @@ def create_blank_fig():
                            "height": 400,
                            "font_size": 14})
     blank_fig.update_xaxes(tick0=-6, dtick=1)
+    blank_fig.update_layout(dragmode=False)
     return blank_fig

@@ -33,14 +33,17 @@ app.layout = dbc.Container([
                         html.P(children=[
                             html.Span("Mean: ", className="bold-p"),
                             html.Span(id="current-mu"),
-                            html.Span("Standard deviation: ", className="bold-p", style={"margin-left":"10px"}),
+                            html.Span("Standard deviation: ",
+                                      className="bold-p",
+                                      style={"margin-left":"10px"}),
                             html.Span(id="current-sigma")
                         ]),
                         html.P(children=[
                             html.Span("Degrees of freedom: ", className="bold-p"),
                             html.Span(id="current-nu"),
-                            html.Span(
-                                "Confidence level: ", className="bold-p", style={"margin-left": "10px"}),
+                            html.Span("Confidence level: ",
+                                      className="bold-p",
+                                      style={"margin-left": "10px"}),
                             html.Span(id="current-alpha")
                         ]),
                         html.P(children=[
@@ -50,18 +53,22 @@ app.layout = dbc.Container([
                     ], id="output", style={"display": "none"}, **{"aria-live": "polite"})
                 ])
             ])
-        ], xs=12, sm=12, md=6, lg=6, xl=6),
+        ], xs=12, md=6),
         dbc.Col([
             html.Div([
                 dcc.Graph(id="t-dist-fig",
                           figure=create_blank_fig(),
-                          config={"displayModeBar": False})
+                          config={"displayModeBar": False,
+                                  "doubleClick": False,
+                                  "editable": False,
+                                  "scrollZoom": False,
+                                  "showAxisDragHandles": False})
             ], role="img"),
             html.Div(id="sr-t",
                      children=[],
                      className="sr-only",
                      **{"aria-live": "polite"})
-        ], xs=12, sm=12, md=6, lg=6, xl=6)
+        ], xs=12, md=6)
     ]),
     dbc.Row([
         dbc.Col([
@@ -90,7 +97,7 @@ app.layout = dbc.Container([
                            children="Set mean and SD",
                            class_name="button")
             ], className="d-flex justify-content-center"),
-        ], xs=12, sm=12, md=4, lg=4, xl=4),
+        ], xs=12, md=4),
         dbc.Col([
             dbc.Label("Degrees of freedom",
                        className="label",
@@ -122,6 +129,6 @@ app.layout = dbc.Container([
                               0.99: {"label": "99%"}},
                        disabled=True),
             html.Br()
-        ], xs=12, sm=12, md=8, lg=8, xl=8)
+        ], xs=12, md=8)
     ])
 ], fluid=True)

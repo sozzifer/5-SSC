@@ -79,9 +79,10 @@ def update_graph(n_clicks, nu, alpha, mu, sigma):
                                  marker_color=stat_colours["+-1std"],
                                  marker_opacity=0,
                                  hovertemplate="Upper CI: %{x:.3f}<extra></extra>"))
+        fig.update_layout(dragmode=False)
     return fig, {"display": "inline"}, mu, sigma, nu, f"{alpha:.0%}", f"({t1}, {t2})", False, False, sr_t
 
 
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=8080, dev_tools_ui=False)
-    # app.run(debug=True)
+    # app.run(debug=False, host="0.0.0.0", port=8080, dev_tools_ui=False)
+    app.run(debug=True)
