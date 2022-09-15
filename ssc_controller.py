@@ -1,58 +1,52 @@
 from dash import Input, Output, exceptions
-import plotly.graph_objects as go
 import numpy as np
+import plotly.graph_objects as go
 import scipy.stats as stat
+from ssc_model import stat_colours, t_distribution
 from ssc_view import app
-from ssc_model import stat_colours
+
+# app.callback Outputs and Inputs are all associated with unique elements in *_view.py though the first argument (component_id) and control/are controlled by the second argument (component_property)
 
 
+# Callback function to update t distribution graph, results and associated screen reader text based on user entry values (mu (mean), sigma (standard deviation), degrees of freedom (nu) and confidence level (alpha))
 @app.callback(
+    # Graph Outputs
     Output("t-dist-fig", "figure"),
-    Output("output", "style"),
+    Output("sr-t", "children"),
+    # Results hidden until callback triggered
+    Output("results", "style"),
+    # Results
     Output("current-mu", "children"),
     Output("current-sigma", "children"),
     Output("current-nu", "children"),
     Output("current-alpha", "children"),
     Output("conf-int", "children"),
+    # User Input for degrees of freedom/confidence level disabled until mean/SD set
     Output("nu", "disabled"),
     Output("alpha", "disabled"),
-    Output("sr-t", "children"),
+    # Inputs
     Input("submit", "n_clicks"),
-    Input("nu", "value"),
-    Input("alpha", "value"),
     Input("mu", "value"),
     Input("sigma", "value"),
+    Input("nu", "value"),
+    Input("alpha", "value"),
     prevent_initial_call=True
 )
-def update_graph(n_clicks, nu, alpha, mu, sigma):
+def update_graph(n_clicks, mu, sigma, nu, alpha):
     if n_clicks is None or mu is None or sigma is None or nu is None:
         raise exceptions.PreventUpdate
     else:
-        x = np.linspace(stat.t.ppf(0.0001, nu, mu, sigma),
-                        stat.t.ppf(0.9999, nu, mu, sigma),
-                        10000)
-        t_x = stat.t.pdf(x, nu, mu, sigma)
-        conf_int = stat.t.interval(alpha, nu, mu, sigma)
-        t1 = round(conf_int[0], 3)
-        t2 = round(conf_int[1], 3)
-        alpha_1tail = 1 - ((1 - alpha)/2)
-        lower_ci = np.linspace(stat.t.ppf(0.0001, nu, mu, sigma),
-                               stat.t.ppf(1-alpha_1tail, nu, mu, sigma),
-                               10000)
-        t_pdf1 = stat.t.pdf(lower_ci, nu, mu, sigma)
-        upper_ci = np.linspace(stat.t.ppf(alpha_1tail, nu, mu, sigma),
-                               stat.t.ppf(0.9999, nu, mu, sigma),
-                               10000)
-        t_pdf2 = stat.t.pdf(upper_ci, nu, mu, sigma)
+        x, t_x, t1, t2, alpha_1tail, lower_ci, t_pdf1, upper_ci, t_pdf2 = t_distribution(mu, sigma, nu, alpha)
+        # Screen reader text
         sr_t = f"Student's t distribution graph with mean {mu}, standard deviation {sigma}, {nu} degrees of freedom and confidence level {alpha*100}%"
         fig = go.Figure(go.Scatter(x=x,
                                    y=t_x,
                                    name="t distribution",
                                    marker_color=stat_colours["norm"],
                                    hoverinfo="skip"),
-                                   layout={"margin": dict(t=20, b=10, l=20, r=20),
-                                           "height": 400,
-                                           "font_size": 14})
+                        layout={"margin": dict(t=20, b=10, l=20, r=20),
+                                "height": 400,
+                                "font_size": 14})
         fig.add_trace(go.Scatter(x=lower_ci,
                                  y=t_pdf1,
                                  name="Probability",
@@ -80,9 +74,10 @@ def update_graph(n_clicks, nu, alpha, mu, sigma):
                                  marker_opacity=0,
                                  hovertemplate="Upper CI: %{x:.3f}<extra></extra>"))
         fig.update_layout(dragmode=False)
-    return fig, {"display": "inline"}, mu, sigma, nu, f"{alpha:.0%}", f"({t1}, {t2})", False, False, sr_t
+    return fig, sr_t, {"display": "inline"}, mu, sigma, nu, f"{alpha:.0%}", f"({t1}, {t2})", False, False
 
 
 if __name__ == "__main__":
-    # app.run(debug=False, host="0.0.0.0", port=8080, dev_tools_ui=False)
-    app.run(debug=True)
+    # app.run(debug=True)
+    # To deploy on Docker, replace app.run(debug=True) with the following:
+    app.run(debug=False, host="0.0.0.0", port=8080, dev_tools_ui=False)

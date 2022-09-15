@@ -2,6 +2,7 @@ from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
 from ssc_model import create_blank_fig
 
+# Specify HTML <head> elements
 app = Dash(__name__,
            title="Student's t distribution",
            update_title=None,
@@ -9,15 +10,16 @@ app = Dash(__name__,
            meta_tags=[{"name": "viewport",
                        "content": "width=device-width,\
                                    initial-scale=1.0,\
-                                   maximum-scale=1.0"
-                       }]
-           )
+                                   maximum-scale=1.0"}])
 
+# Specify app layout (HTML <body> elements) using dash.html, dash.dcc and dash_bootstrap_components
+# All component IDs should relate to the Input or Output of callback functions in nor_controller.py
 app.layout = dbc.Container([
+    # Instructions, Results and Graph
     dbc.Row([
         dbc.Col([
             dbc.Card([
-                dbc.CardBody(children=[
+                dbc.CardBody([
                     "This tool will allow you to view the Student's t distribution curve for different confidence levels and degrees of freedom. To display the distribution, enter values for the mean and standard deviation and click ",
                     html.Span("Set mean and SD", className="bold-p"),
                     ". Adjust the degrees of freedom and confidence level to see how this affects the confidence interval.",
@@ -27,10 +29,10 @@ app.layout = dbc.Container([
                 ])
             ]),
             dbc.Card([
-                dbc.CardBody(children=[
-                    html.H4("Results"),
+                dbc.CardBody([
                     html.Div([
-                        html.P(children=[
+                        html.H4("Results"),
+                        html.P([
                             html.Span("Mean: ", className="bold-p"),
                             html.Span(id="current-mu"),
                             html.Span("Standard deviation: ",
@@ -38,7 +40,7 @@ app.layout = dbc.Container([
                                       style={"margin-left":"10px"}),
                             html.Span(id="current-sigma")
                         ]),
-                        html.P(children=[
+                        html.P([
                             html.Span("Degrees of freedom: ", className="bold-p"),
                             html.Span(id="current-nu"),
                             html.Span("Confidence level: ",
@@ -46,15 +48,16 @@ app.layout = dbc.Container([
                                       style={"margin-left": "10px"}),
                             html.Span(id="current-alpha")
                         ]),
-                        html.P(children=[
+                        html.P([
                             html.Span("Confidence interval: ", className="bold-p"),
                             html.Span(id="conf-int")
                         ])
-                    ], id="output", style={"display": "none"}, **{"aria-live": "polite"})
+                    ], id="results", style={"display": "none"}, **{"aria-live": "polite", "aria-atomic": "true"})
                 ])
             ])
         ], xs=12, md=6),
         dbc.Col([
+            # Graph components are placed inside a Div with role="img" to manage UX for screen reader users
             html.Div([
                 dcc.Graph(id="t-dist-fig",
                           figure=create_blank_fig(),
@@ -63,18 +66,20 @@ app.layout = dbc.Container([
                                   "editable": False,
                                   "scrollZoom": False,
                                   "showAxisDragHandles": False})
-            ], role="img"),
+            ], role="img", **{"aria-hidden": "true"}),
+            # A second Div is used to associate alt text with the relevant Graph component to manage the experience for screen reader users, styled using CSS class sr-only
             html.Div(id="sr-t",
                      children=[],
                      className="sr-only",
                      **{"aria-live": "polite"})
         ], xs=12, md=6)
     ]),
+    # User Input
     dbc.Row([
         dbc.Col([
             dbc.Label("Mean",
-                       html_for="mean",
-                       className="label"),
+                      html_for="mean",
+                      className="label"),
             dbc.Input(id="mu",
                       name="mean",
                       value=0,
@@ -82,8 +87,8 @@ app.layout = dbc.Container([
                       required=True,
                       debounce=True),
             dbc.Label("Standard deviation",
-                       className="label",
-                       html_for="standard-deviation"),
+                      className="label",
+                      html_for="standard-deviation"),
             dbc.Input(id="sigma",
                       name="standard-deviation",
                       value=1,
