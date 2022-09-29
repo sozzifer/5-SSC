@@ -20,14 +20,38 @@ app.layout = dbc.Container([
         dbc.Col([
             dbc.Card([
                 dbc.CardBody([
-                    "This tool will allow you to view the Student's t distribution curve for different confidence levels and degrees of freedom. To display the distribution, enter values for the mean and standard deviation and click ",
+                    "This tool will allow you to view the t distribution curve for different confidence levels and degrees of freedom. To display the distribution, enter values for the mean and standard deviation and click ",
                     html.Span("Set mean and SD", className="bold-p"),
-                    ". Adjust the degrees of freedom and confidence level to see how this affects the confidence interval.",
+                    ".",
+                    html.Br(),
+                    html.Br(),
+                    "Adjust the degrees of freedom and confidence level to see how this affects the confidence interval and critical T value. You can view the results for a one-sided or two-sided confidence interval by clicking the relevant radio button.",
                     html.Br(),
                     html.Br(),
                     "Pay particular attention to how the scales of the x and y axes change when you enter different values for the mean, standard deviation, degrees of freedom, and confidence level."
                 ])
-            ]),
+            ])
+        ], xs=12, lg=5),
+        dbc.Col([
+            # Graph components are placed inside a Div with role="img" to manage UX for screen reader users
+            html.Div([
+                dcc.Graph(id="t-dist-fig",
+                          figure=create_blank_fig(),
+                          config={"displayModeBar": False,
+                                  "doubleClick": False,
+                                  "editable": False,
+                                  "scrollZoom": False,
+                                  "showAxisDragHandles": False})
+            ], role="img", **{"aria-hidden": "true"}),
+            # A second Div is used to associate alt text with the relevant Graph component to manage the experience for screen reader users, styled using CSS class sr-only
+            html.Div(id="sr-t",
+                     children=[],
+                     className="sr-only",
+                     **{"aria-live": "polite"})
+        ], xs=12, lg=7),
+    ]),
+    dbc.Row([
+        dbc.Col([
             dbc.Card([
                 dbc.CardBody([
                     html.Div([
@@ -48,92 +72,103 @@ app.layout = dbc.Container([
                                       style={"margin-left": "10px"}),
                             html.Span(id="current-alpha")
                         ]),
+                        html.P(id="conf-int"),
+                        html.Br(),
                         html.P([
-                            html.Span("Confidence interval: ", className="bold-p"),
-                            html.Span(id="conf-int")
-                        ])
+                            html.Span("Conclusion: ", className="bold-p"),
+                            html.Span(id="conf-text")])
                     ], id="results", style={"display": "none"}, **{"aria-live": "polite", "aria-atomic": "true"})
                 ])
             ])
-        ], xs=12, md=6),
+        ], xs=12, lg=5),
+        # User Input
         dbc.Col([
-            # Graph components are placed inside a Div with role="img" to manage UX for screen reader users
-            html.Div([
-                dcc.Graph(id="t-dist-fig",
-                          figure=create_blank_fig(),
-                          config={"displayModeBar": False,
-                                  "doubleClick": False,
-                                  "editable": False,
-                                  "scrollZoom": False,
-                                  "showAxisDragHandles": False})
-            ], role="img", **{"aria-hidden": "true"}),
-            # A second Div is used to associate alt text with the relevant Graph component to manage the experience for screen reader users, styled using CSS class sr-only
-            html.Div(id="sr-t",
-                     children=[],
-                     className="sr-only",
-                     **{"aria-live": "polite"})
-        ], xs=12, md=6)
+            dbc.Row([
+                dbc.Label("Degrees of freedom",
+                          className="label",
+                          html_for="nu"),
+                dcc.Slider(id="nu",
+                           value=10,
+                           min=1,
+                           max=40,
+                           step=1,
+                           marks={1: {"label": "1"},
+                                 5: {"label": "5"},
+                                 10: {"label": "10"},
+                                 20: {"label": "20"},
+                                 30: {"label": "30"},
+                                 40: {"label": "40"}},
+                           disabled=True),
+                dbc.Label("Confidence level",
+                          className="label",
+                          html_for="alpha"),
+                dcc.Slider(id="alpha",
+                           value=0.95,
+                           min=0.5,
+                           max=0.99,
+                           step=0.01,
+                           marks={0.5: {"label": "50%"},
+                                  0.6: {"label": "60%"},
+                                  0.7: {"label": "70%"},
+                                  0.8: {"label": "80%"},
+                                  0.9: {"label": "90%"},
+                                  0.95: {"label": "95%"},
+                                  0.99: {"label": "99%"}},
+                           disabled=True)
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    dbc.Label("Mean",
+                              html_for="mean",
+                              className="label"),
+                    dbc.Input(id="mu",
+                             name="mean",
+                             value=0,
+                             type="number",
+                             required=True,
+                             debounce=True)
+                ], xs=12, sm={"size": 8, "order": 1}, md={"size": 4, "order": 1}),
+                dbc.Col([
+                    dbc.Label("Standard deviation",
+                              className="label",
+                              html_for="standard-deviation"),
+                    dbc.Input(id="sigma",
+                              name="standard-deviation",
+                              value=1,
+                              min=0.1,
+                              type="number",
+                              required=True,
+                              debounce=True)
+                ], xs=12, sm={"size": 8, "order": 3}, md={"size": 4, "order": 2}),
+                dbc.Col([
+                    dbc.Label("One or two sided",
+                              className="label",
+                              html_for="one-two-sided"),
+                    html.Div([
+                        dbc.RadioItems(id="one-two-sided",
+                                       options=[
+                                            {"label": "Two-sided",
+                                             "value": "<>",
+                                             "title": "Two-sided"},
+                                            {"label": "One-sided (left)",
+                                             "value": "<",
+                                             "title": "One-sided (left)"},
+                                             {"label": "One-sided (right)",
+                                             "value": ">",
+                                             "title": "One-sided (right)"}],
+                                       value="<>",
+                                       label_style={"display": "block", "margin-bottom": 5})
+                    ], **{"aria-live": "polite"})
+                ], xs=12, sm={"size": 4, "order": 2}, md={"size": 4, "order": 3})
+            ]),
+            dbc.Row([
+                    html.Div([
+                        dbc.Button(id="submit",
+                                  n_clicks=0,
+                                  children="Set mean and SD",
+                                  class_name="button")
+                    ], className="d-flex justify-content-center")
+            ])
+        ]),
     ]),
-    # User Input
-    dbc.Row([
-        dbc.Col([
-            dbc.Label("Mean",
-                      html_for="mean",
-                      className="label"),
-            dbc.Input(id="mu",
-                      name="mean",
-                      value=0,
-                      type="number",
-                      required=True,
-                      debounce=True),
-            dbc.Label("Standard deviation",
-                      className="label",
-                      html_for="standard-deviation"),
-            dbc.Input(id="sigma",
-                      name="standard-deviation",
-                      value=1,
-                      min=0.1,
-                      type="number",
-                      required=True,
-                      debounce=True),
-            html.Div([
-                dbc.Button(id="submit",
-                           n_clicks=0,
-                           children="Set mean and SD",
-                           class_name="button")
-            ], className="d-flex justify-content-center"),
-        ], xs=12, md=4),
-        dbc.Col([
-            dbc.Label("Degrees of freedom",
-                       className="label",
-                       html_for="nu"),
-            dcc.Slider(id="nu",
-                       value=10,
-                       min=1,
-                       max=40,
-                       step=1,
-                       marks={1: {"label": "1"},
-                              5: {"label": "5"},
-                              10: {"label": "10"},
-                              20: {"label": "20"},
-                              30: {"label": "30"},
-                              40: {"label": "40"}},
-                       disabled=True),
-            dbc.Label("Confidence level",
-                       className="label",
-                       html_for="alpha"),
-            dcc.Slider(id="alpha",
-                       value=0.95,
-                       min=0.8,
-                       max=0.99,
-                       step=0.01,
-                       marks={0.8: {"label": "80%"},
-                              0.85: {"label": "85%"},
-                              0.9: {"label": "90%"},
-                              0.95: {"label": "95%"},
-                              0.99: {"label": "99%"}},
-                       disabled=True),
-            html.Br()
-        ], xs=12, md=8)
-    ])
 ], fluid=True)
